@@ -1,0 +1,6 @@
+# apps/rust-be/.dockerignore
+target/
+Dockerfile
+.gitignore
+*.lock
+*.log

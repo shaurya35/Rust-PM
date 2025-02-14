@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: password-manager-backend
+    runtime: docker
+    dockerfilePath: apps/rust-be/Dockerfile
+    env: docker
+    autoDeploy: true
+    port: 8080
+    envVars:
+      - key: ALLOWED_ORIGIN
+        value: https://your-vercel-app.vercel.app
+      - key: PORT
+        value: 8080
