@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub stuct User {
+pub struct User {
     pub id: String,
     pub code: String,
     pub passwords: Vec<PasswordEntry>,
