@@ -4,6 +4,14 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../lib/api';
 import PasswordList from '../components/PasswordList';
 
+interface PasswordEntry {
+  id: string;
+  website: string;
+  username: string;
+  password: string;
+}
+
+
 export default function Home() {
   const [code, setCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,7 +145,7 @@ export default function Home() {
             <p className="text-gray-500 text-center">Loading passwords...</p>
           ) : (
             <PasswordList 
-              passwords={passwords.filter(p => 
+              passwords={passwords.filter((p: PasswordEntry) => 
                 p.website.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 p.username.toLowerCase().includes(searchQuery.toLowerCase())
           )} 
