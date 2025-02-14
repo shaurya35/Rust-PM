@@ -1,102 +1,132 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+'use client';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import axios from 'axios';
+import PasswordList from '../components/PasswordList';
 
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
-
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
-
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
+interface PasswordEntry {
+  id: string;
+  website: string;
+  username: string;
+  password: string;
+}
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [code, setCode] = useState('');
+  const [search, setSearch] = useState('');
+  const [newEntry, setNewEntry] = useState({
+    website: '',
+    username: '',
+    password: ''
+  });
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  // Fetch passwords
+  const { data: passwords = [], refetch } = useQuery({
+    queryKey: ['passwords', code],
+    queryFn: async () => {
+      const response = await axios.get(`http://localhost:8080/api/passwords?code=${code}`);
+      return response.data;
+    },
+    enabled: !!code
+  });
+
+  // Signup mutation
+  const signupMutation = useMutation({
+    mutationFn: async () => {
+      const response = await axios.post('http://localhost:8080/api/signup');
+      return response.data;
+    }
+  });
+
+  // Add password mutation
+  const addPasswordMutation = useMutation({
+    mutationFn: async () => {
+      await axios.post('http://localhost:8080/api/passwords', {
+        code,
+        ...newEntry
+      });
+    },
+    onSuccess: () => {
+      setNewEntry({ website: '', username: '', password: '' });
+      refetch();
+    }
+  });
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl mb-4">Password Manager</h1>
+      
+      {/* Code Input Section */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Enter 6-digit code"
+          className="border p-2 mr-2"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+        />
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={() => signupMutation.mutate()}
+        >
+          {signupMutation.isPending ? 'Generating...' : 'Sign Up'}
+        </button>
+      </div>
+
+      {/* Add Password Form */}
+      {code && (
+        <div className="mb-6">
+          <h2 className="text-xl mb-2">Add New Password</h2>
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              placeholder="Website"
+              className="border p-2 flex-1"
+              value={newEntry.website}
+              onChange={(e) => setNewEntry({ ...newEntry, website: e.target.value })}
             />
-            Deploy now
-          </a>
-          <a
-            href="https://turbo.build/repo/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+            <input
+              type="text"
+              placeholder="Username"
+              className="border p-2 flex-1"
+              value={newEntry.username}
+              onChange={(e) => setNewEntry({ ...newEntry, username: e.target.value })}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              className="border p-2 flex-1"
+              value={newEntry.password}
+              onChange={(e) => setNewEntry({ ...newEntry, password: e.target.value })}
+            />
+            <button
+              className="bg-green-500 text-white px-4 py-2 rounded"
+              onClick={() => addPasswordMutation.mutate()}
+            >
+              {addPasswordMutation.isPending ? 'Adding...' : 'Add'}
+            </button>
+          </div>
         </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+      )}
+
+      {/* Password List */}
+      {code && (
+        <div>
+          <input
+            type="text"
+            placeholder="Search passwords..."
+            className="border p-2 mb-4 w-full"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
-          Examples
-        </a>
-        <a
-          href="https://turbo.build?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
+          <PasswordList 
+            passwords={passwords.filter(p => 
+              p.website.toLowerCase().includes(search.toLowerCase()) ||
+              p.username.toLowerCase().includes(search.toLowerCase())
+            )} 
           />
-          Go to turbo.build →
-        </a>
-      </footer>
+        </div>
+      )}
     </div>
   );
 }
